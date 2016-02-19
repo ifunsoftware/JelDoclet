@@ -34,6 +34,8 @@ package com.jeldoclet;
  */
 
 import com.sun.javadoc.*;
+import com.sun.javadoc.AnnotationDesc.ElementValuePair;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +49,8 @@ import java.util.Date;
 public class JELDoclet
 {
     private final static Logger log = LoggerFactory.getLogger(JELDoclet.class);
+
+    private static final String JEL_TYPE = "jelclass";
 
     /**
      * (thz) program version
@@ -108,6 +112,16 @@ public class JELDoclet
         return true;
     }
 
+    /**
+     * NOTE: Without this method present and returning LanguageVersion.JAVA_1_5,
+     *       Javadoc will not process generics because it assumes LanguageVersion.JAVA_1_1
+     * @return language version (hard coded to LanguageVersion.JAVA_1_5)
+     * @see http://stackoverflow.com/questions/5731619/doclet-get-generics-of-a-list
+     */
+    public static LanguageVersion languageVersion() {
+       return LanguageVersion.JAVA_1_5;
+    }
+    
 
     /**
      * A JavaDoc option parsing handler.  This one returns the number of arguments required
@@ -282,7 +296,7 @@ public class JELDoclet
 
         for ( int index = 0; index < classes.length; index++ )
         {
-            retval[index] = transformClass( classes[index], null );
+            retval[index] = transformClass( classes[index], null ,JEL_TYPE);
         }
 
         return retval;
@@ -419,6 +433,8 @@ public class JELDoclet
 
         transformComment( method, node );
 
+        transformAnnotations(method.annotations(),node);
+        
         // Add the basic values
 
         node.addAttribute( "name", method.name() );
@@ -460,7 +476,7 @@ public class JELDoclet
 
                 paramNode.addAttribute( "name", params[param].name() );
                 paramNode.addAttribute( "type", params[param].type().typeName() );
-                paramNode.addAttribute( "fulltype", params[param].type().toString() );
+                populateGenericType(params[param].type(), paramNode);
 
                 for( int paramTag = 0; paramTag < paramTags.length; paramTag++ )
                 {
@@ -549,8 +565,7 @@ public class JELDoclet
             populateMethodNode( methods[index], methodNode );
 
             methodNode.addAttribute( "type", methods[index].returnType().typeName() );
-            methodNode.addAttribute( "fulltype", methods[index].returnType().toString() );
-
+            populateGenericType( methods[index].returnType(), methodNode );
             Tag[] returnTags = methods[ index ].tags( "@return" );
             if ( returnTags.length > 0 )
             {
@@ -565,20 +580,47 @@ public class JELDoclet
         node.addNode( methodsNode );
     }
 
+    private static void populateGenericType(Type returnType, XMLNode rootNode)
+    {
+      
+      String fullType = returnType.toString();
+      int i = fullType.indexOf("<");
+      if (i>0) {
+        rootNode.addAttribute( "fulltype",  fullType.substring(0, i));
+        ParameterizedType parameterizedType = returnType.asParameterizedType();
+        if (parameterizedType != null) {
+          Type[] typeArguments = parameterizedType.typeArguments();
+          if (typeArguments.length>0) {
+            XMLNode genericNode = new XMLNode( "genericTypes");
+            for (Type type : typeArguments)
+            {
+              XMLNode node = new XMLNode( "type");
+              populateGenericType(type,node);
+              genericNode.addNode(node);
+            }
+            rootNode.addNode(genericNode);
+          }
+        }
+      } else {
+        rootNode.addAttribute( "fulltype",  fullType);
+      }
+    }
+
     /**
      * Transforms a ClassDoc class into XML and adds it to the root XML node.
      *
      * @param classDoc The class to transform.
      * @param root The XML node to add the class XML to.
      */
-    private static XMLNode transformClass( ClassDoc classDoc, XMLNode root )
+    private static XMLNode transformClass( ClassDoc classDoc, XMLNode root, String type )
     {
-        XMLNode classNode = new XMLNode( "jelclass" );  //"class" needs a prefix for output to work with JAXB.
+        XMLNode classNode = new XMLNode( type );  //"class" needs a prefix for output to work with JAXB.
 
         // Handle basic class attributes
 
         setVisibility(classDoc, classNode);
-
+        transformAnnotations(classDoc.annotations(),classNode);
+        
         classNode.addAttribute( "type", classDoc.name() );
         classNode.addAttribute( "fulltype", classDoc.qualifiedName() );
         classNode.addAttribute( "package", classDoc.containingPackage().name() );
@@ -634,8 +676,43 @@ public class JELDoclet
 
         ClassDoc[] innerClasses = classDoc.innerClasses();
         for( int classIndex = 0; classIndex < innerClasses.length; classIndex++ )
-            classNode.addNode ( transformClass( innerClasses[classIndex], classNode ) );
+            classNode.addNode ( transformClass( innerClasses[classIndex], classNode , JEL_TYPE) );
 
         return classNode;
+    }
+
+
+    private static void transformAnnotations(AnnotationDesc[] annotationDescs, XMLNode classNode)
+    {
+      if (annotationDescs.length>0) {
+        XMLNode annotationsNode = new XMLNode( "annotations" ); 
+        for (AnnotationDesc annotationDesc : annotationDescs)
+        {
+          XMLNode node = new XMLNode( "annotation" );  //"class" needs a prefix for output to work with JAXB.
+          AnnotationTypeDoc doc = annotationDesc.annotationType();
+          node.addAttribute( "type", doc.name() );
+          node.addAttribute( "fulltype", doc.qualifiedName() );
+          node.addAttribute( "package", doc.containingPackage().name() );
+          ElementValuePair[] valuePairs = annotationDesc.elementValues();
+          if (valuePairs.length>0) {
+            XMLNode values = new XMLNode( "values" );  
+            for (ElementValuePair valuePair : valuePairs)
+            {
+              XMLNode value = new XMLNode( "value" );  
+              value.addAttribute("name", valuePair.element().name());
+              String strVal = valuePair.value().toString();
+              if (strVal.length()>1 && strVal.startsWith("\"") && strVal.endsWith("\"")) {
+                value.addAttribute("value", strVal.substring(1, strVal.length()-1));
+              } else {
+                value.addAttribute("value", strVal);
+              }
+              values.addNode(value);
+            }
+            annotationsNode.addNode(values);
+          }
+          annotationsNode.addNode(node);
+        }
+        classNode.addNode(annotationsNode);
+      }
     }
 }
