@@ -100,9 +100,6 @@ public class JELDoclet
      */
     public static boolean start( RootDoc root )
     {
-      
-        System.out.println("JELDoclet started (console)");
-        log.info("JELDoclet started");
         //Get program options
         getOptions(root);
 
