@@ -100,6 +100,9 @@ public class JELDoclet
      */
     public static boolean start( RootDoc root )
     {
+      
+        System.out.println("JELDoclet started (console)");
+        log.info("JELDoclet started");
         //Get program options
         getOptions(root);
 
@@ -363,9 +366,17 @@ public class JELDoclet
 
             XMLNode fieldNode = new XMLNode( "field");
 
+            Type type = fields[index].type();
             fieldNode.addAttribute( "name", fields[index].name() );
-            fieldNode.addAttribute( "type", fields[index].type().typeName() );
-            fieldNode.addAttribute( "fulltype", fields[index].type().toString() );
+            fieldNode.addAttribute( "type", type.typeName() );
+            if (type.asParameterizedType()==null) {
+              fieldNode.addAttribute( "fulltype", type.toString() );
+            } else {
+              //for Fields with Generic - use this method instead of toString()
+              fieldNode.addAttribute( "fulltype", type.qualifiedTypeName());
+            }
+            populateGenericType(type,fieldNode);
+                
 
             if ( fields[index].constantValue() != null && fields[index].constantValue().toString().length() > 0 )
                 fieldNode.addAttribute( "const", fields[index].constantValue().toString() );
@@ -476,6 +487,7 @@ public class JELDoclet
 
                 paramNode.addAttribute( "name", params[param].name() );
                 paramNode.addAttribute( "type", params[param].type().typeName() );
+                transformAnnotations(params[param].annotations(),paramNode);
                 populateGenericType(params[param].type(), paramNode);
 
                 for( int paramTag = 0; paramTag < paramTags.length; paramTag++ )
@@ -708,7 +720,7 @@ public class JELDoclet
               }
               values.addNode(value);
             }
-            annotationsNode.addNode(values);
+            node.addNode(values);
           }
           annotationsNode.addNode(node);
         }
