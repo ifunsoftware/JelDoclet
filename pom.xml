@@ -6,10 +6,10 @@
     <artifactId>s4-jeldoclet</artifactId>
     <packaging>jar</packaging>
     <name>JelDoclet module</name>
-	<version>1.1.1-SNAPSHOT</version>
+    <version>1.1.2-SNAPSHOT</version>
 
     <scm>
-        <connection>scm:git:https://github.com/ifunsoftware/JelDoclet.git</connection>
+        <connection>scm:git:git@github.com:ifunsoftware/JelDoclet.git</connection>
         <url>https://github.com/ifunsoftware/JelDoclet</url>
     </scm>
 
@@ -23,14 +23,14 @@
             <!--<scope>system</scope>
             <systemPath>${java.home}/../lib/tools.jar</systemPath>
             -->
-	    </dependency>
+        </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.6.1</version>
         </dependency>
-        
+
     </dependencies>
 
     <build>
@@ -46,17 +46,17 @@
             </plugin>
         </plugins>
     </build>
-	
-	<distributionManagement>
+
+    <distributionManagement>
         <repository>
             <id>ifunsoftware</id>
             <name>iFunSoftware release repository</name>
-            <url>http://repository-ifunsoftware.rhcloud.com/content/repositories/releases</url>
+            <url>http://repository.ifunsoftware.com/content/repositories/releases</url>
         </repository>
         <snapshotRepository>
             <id>ifunsoftware-snap</id>
             <name>iFunSoftware snapshot repository</name>
-            <url>http://repository-ifunsoftware.rhcloud.com/content/repositories/snapshots/</url>
+            <url>http://repository.ifunsoftware.com/content/repositories/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -64,13 +64,13 @@
         <repository>
             <id>libs-release</id>
             <name>iFunSoftware release repository</name>
-            <url>http://repository-ifunsoftware.rhcloud.com/content/repositories/releases</url>
+            <url>http://repository.ifunsoftware.com/content/repositories/releases</url>
         </repository>
 
         <repository>
             <id>libs-snapshot</id>
             <name>iFunSoftware snapshot repository</name>
-            <url>http://repository-ifunsoftware.rhcloud.com/content/repositories/snapshots/</url>
+            <url>http://repository.ifunsoftware.com/content/repositories/snapshots/</url>
         </repository>
     </repositories>
 
