@@ -1,15 +1,15 @@
 package com.jeldoclet;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Vector;
+import java.util.regex.Pattern;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.FileWriter;
-import java.io.IOException;
-
-import java.util.HashMap;
-import java.util.Vector;
-import java.util.Iterator;
-import java.util.regex.*;
 
 /**
  * Represents an XML node
@@ -163,7 +163,8 @@ public class XMLNode
 			}
 			// /thz
 			
-			FileWriter out = new FileWriter( dir + fileName );
+			//FileWriter cannot write international characters properly, see http://stackoverflow.com/a/9853008/4123249
+			OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(dir + fileName ), outputEncoding);
 			out.write( _processingInstructions );
 			out.write( this.toString("") );
 			out.close();
