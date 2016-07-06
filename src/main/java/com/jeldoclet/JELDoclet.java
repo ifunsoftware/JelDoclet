@@ -363,6 +363,7 @@ public class JELDoclet
 
             XMLNode fieldNode = new XMLNode( "field");
 
+            transformAnnotations(fields[index].annotations(), fieldNode);
             Type type = fields[index].type();
             fieldNode.addAttribute( "name", fields[index].name() );
             fieldNode.addAttribute( "type", type.typeName() );
@@ -653,10 +654,33 @@ public class JELDoclet
 
         if ( classDoc.superclass() != null )
         {
-            classNode.addAttribute( "superclass", classDoc.superclass().name() );
+        	classNode.addAttribute( "superclass", classDoc.superclass().name() );
             classNode.addAttribute( "superclassfulltype", classDoc.superclass().qualifiedName() );
         }
 
+        //collect all enumeration constants
+        if ( classDoc.isEnum()) {
+            XMLNode enums = new XMLNode( "enumeration" );
+            classNode.addNode( enums );
+        	for (FieldDoc enumValue : classDoc.enumConstants()) {
+        		XMLNode value = new XMLNode( "value" );
+        		value.addAttribute( "name", enumValue.name());
+        		if (enumValue.constantValue() instanceof String) {
+        			value.addAttribute( "value", (String) enumValue.constantValue());
+				} else if (enumValue.constantValue() != null) {
+        			value.addAttribute( "value", String.valueOf(enumValue.constantValue()));
+				}
+        		if (enumValue.constantValueExpression() != null) {
+        			value.addAttribute( "expression", enumValue.constantValueExpression());
+        		}
+        		if (enumValue.commentText() != null && enumValue.commentText().length()>0) {
+        			value.addAttribute( "description", enumValue.commentText());
+        		}
+        		enums.addNode( value );
+			}
+        }
+		
+        
         if ( classDoc.isInterface() )
             classNode.addAttribute( "interface", "true" );
 
