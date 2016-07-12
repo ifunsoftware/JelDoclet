@@ -635,6 +635,21 @@ public class JELDoclet
         classNode.addAttribute( "fulltype", classDoc.qualifiedName() );
         classNode.addAttribute( "package", classDoc.containingPackage().name() );
 
+        if (classDoc.typeParameters() != null && classDoc.typeParameters().length>0) {
+        	//class is generic
+        	Type[] typeArguments = classDoc.typeParameters();
+	        if (typeArguments.length>0) {
+	          XMLNode genericNode = new XMLNode( "typeParameters");
+	          for (Type type2 : typeArguments)
+	          {
+	            XMLNode node = new XMLNode( "type");
+	            populateGenericType(type2,node);
+	            genericNode.addNode(node);
+	          }
+	          classNode.addNode(genericNode);
+	        }
+        }
+    	
         ClassDoc[] extendClasses = classDoc.interfaces();
         if(extendClasses.length > 0)
         {
