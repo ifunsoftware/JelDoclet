@@ -1,5 +1,7 @@
 package com.jeldoclet;
 
+import java.util.Date;
+
 /*
  * File: JELDoclet.java
  * Purpose: A Doclet to be used with JavaDoc which will output XML with all of the information
@@ -32,14 +34,25 @@ package com.jeldoclet;
  * 
  * This source is covered by the Open Software Licenses (1.1)
  */
-
-import com.sun.javadoc.*;
+import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.AnnotationDesc.ElementValuePair;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Date;
+import com.sun.javadoc.AnnotationTypeDoc;
+import com.sun.javadoc.ClassDoc;
+import com.sun.javadoc.ConstructorDoc;
+import com.sun.javadoc.Doc;
+import com.sun.javadoc.DocErrorReporter;
+import com.sun.javadoc.ExecutableMemberDoc;
+import com.sun.javadoc.FieldDoc;
+import com.sun.javadoc.LanguageVersion;
+import com.sun.javadoc.MethodDoc;
+import com.sun.javadoc.ParamTag;
+import com.sun.javadoc.Parameter;
+import com.sun.javadoc.ParameterizedType;
+import com.sun.javadoc.ProgramElementDoc;
+import com.sun.javadoc.RootDoc;
+import com.sun.javadoc.Tag;
+import com.sun.javadoc.ThrowsTag;
+import com.sun.javadoc.Type;
 
 /**
  * The core JELDoclet class.
@@ -48,7 +61,7 @@ import java.util.Date;
  */
 public class JELDoclet
 {
-    private final static Logger log = LoggerFactory.getLogger(JELDoclet.class);
+//    private final static Logger log = LoggerFactory.getLogger(JELDoclet.class);
 
     private static final String JEL_TYPE = "jelclass";
 
@@ -91,6 +104,13 @@ public class JELDoclet
      */
     private static String filenameBase = "";
 
+    public static void main(String[] args) {
+        com.sun.tools.javadoc.Main.execute(new String[]{"-verbose",
+        		"-doclet",JELDoclet.class.getName(),
+        		"-sourcepath","C:/dev/newspace/pcc/PCCAPI/src",//com/pointclickcare/api/common/paging/model/dto
+        		"com.pointclickcare.api.common.paging.model.dto"});
+    }
+    
     /**
      * Processes the JavaDoc documentation.
      *
@@ -220,14 +240,14 @@ public class JELDoclet
         }
 
         // thz
-        log.debug("jeldoclet V" + programversion);
-        log.debug( "Using output directory '" + outputDirectory + "'.");
-        log.debug( "output encoding '" + outputEncoding + "'.");
-        log.debug("Saving as " + (multipleFiles ? "multiple files." : "a single file."));
-
-        if(!filenameBase.equals("")){
-            log.debug("filename " + (multipleFiles ? " base " : "") + ": '" + filenameBase + "')");
-        }
+//        log.debug("jeldoclet V" + programversion);
+//        log.debug( "Using output directory '" + outputDirectory + "'.");
+//        log.debug( "output encoding '" + outputEncoding + "'.");
+//        log.debug("Saving as " + (multipleFiles ? "multiple files." : "a single file."));
+//
+//        if(!filenameBase.equals("")){
+//            log.debug("filename " + (multipleFiles ? " base " : "") + ": '" + filenameBase + "')");
+//        }
     }
 
 
@@ -363,6 +383,7 @@ public class JELDoclet
 
             XMLNode fieldNode = new XMLNode( "field");
 
+            transformAnnotations(fields[index].annotations(), fieldNode);
             Type type = fields[index].type();
             fieldNode.addAttribute( "name", fields[index].name() );
             fieldNode.addAttribute( "type", type.typeName() );
@@ -633,7 +654,22 @@ public class JELDoclet
         classNode.addAttribute( "type", classDoc.name() );
         classNode.addAttribute( "fulltype", classDoc.qualifiedName() );
         classNode.addAttribute( "package", classDoc.containingPackage().name() );
-
+    	
+        if (classDoc.typeParameters() != null && classDoc.typeParameters().length>0) {
+        	//class is generic
+        	Type[] typeArguments = classDoc.typeParameters();
+	        if (typeArguments.length>0) {
+	          XMLNode genericNode = new XMLNode( "typeParameters");
+	          for (Type type2 : typeArguments)
+	          {
+	            XMLNode node = new XMLNode( "type");
+	            populateGenericType(type2,node);
+	            genericNode.addNode(node);
+	          }
+	          classNode.addNode(genericNode);
+	        }
+        }
+    	
         ClassDoc[] extendClasses = classDoc.interfaces();
         if(extendClasses.length > 0)
         {
@@ -653,10 +689,33 @@ public class JELDoclet
 
         if ( classDoc.superclass() != null )
         {
-            classNode.addAttribute( "superclass", classDoc.superclass().name() );
+        	classNode.addAttribute( "superclass", classDoc.superclass().name() );
             classNode.addAttribute( "superclassfulltype", classDoc.superclass().qualifiedName() );
         }
 
+        //collect all enumeration constants
+        if ( classDoc.isEnum()) {
+            XMLNode enums = new XMLNode( "enumeration" );
+            classNode.addNode( enums );
+        	for (FieldDoc enumValue : classDoc.enumConstants()) {
+        		XMLNode value = new XMLNode( "value" );
+        		value.addAttribute( "name", enumValue.name());
+        		if (enumValue.constantValue() instanceof String) {
+        			value.addAttribute( "value", (String) enumValue.constantValue());
+				} else if (enumValue.constantValue() != null) {
+        			value.addAttribute( "value", String.valueOf(enumValue.constantValue()));
+				}
+        		if (enumValue.constantValueExpression() != null) {
+        			value.addAttribute( "expression", enumValue.constantValueExpression());
+        		}
+        		if (enumValue.commentText() != null && enumValue.commentText().length()>0) {
+        			value.addAttribute( "description", enumValue.commentText());
+        		}
+        		enums.addNode( value );
+			}
+        }
+		
+        
         if ( classDoc.isInterface() )
             classNode.addAttribute( "interface", "true" );
 
@@ -724,4 +783,6 @@ public class JELDoclet
         classNode.addNode(annotationsNode);
       }
     }
+    
+    
 }

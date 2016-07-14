@@ -8,9 +8,6 @@ import java.util.Iterator;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Represents an XML node
  * 
@@ -24,8 +21,6 @@ import org.slf4j.LoggerFactory;
  */
 public class XMLNode
 {
-
-    private final static Logger log = LoggerFactory.getLogger(XMLNode.class);
 
 	/**
 	 * Used in the toString method to provide a carriage-return + line-feed. 
@@ -171,7 +166,8 @@ public class XMLNode
 		}
 		catch( IOException e )
 		{
-            log.error("Could not create '" + dir + fileName + "'", e);
+            System.err.println("Could not create '" + dir + fileName + "'");
+            e.printStackTrace();
 		}
 	}
 
