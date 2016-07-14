@@ -104,13 +104,6 @@ public class JELDoclet
      */
     private static String filenameBase = "";
 
-    public static void main(String[] args) {
-        com.sun.tools.javadoc.Main.execute(new String[]{"-verbose",
-        		"-doclet",JELDoclet.class.getName(),
-        		"-sourcepath","C:/dev/newspace/pcc/PCCAPI/src",//com/pointclickcare/api/common/paging/model/dto
-        		"com.pointclickcare.api.common.paging.model.dto"});
-    }
-    
     /**
      * Processes the JavaDoc documentation.
      *
