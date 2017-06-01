@@ -6,7 +6,6 @@ import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
-import java.util.regex.Pattern;
 
 /**
  * Represents an XML node
@@ -178,7 +177,7 @@ public class XMLNode
 	 */
 	public String toString(String tabs)
 	{
-		StringBuffer out = new StringBuffer();
+	  StringBuilder out = new StringBuilder();
 		
 		out.append( tabs + "<" + _namespacePrefix + _type );
 		Iterator attrIterator = _attributes.keySet().iterator();
@@ -218,28 +217,88 @@ public class XMLNode
 		return out.toString();
 	}
 	
-	/** 
-	 * Encodes strings as XML. Check for <, >, ', ", &.
+//	/** 
+//	 * Encodes strings as XML. Check for <, >, ', ", &.
+//	 * 
+//	 * @param in The input string
+//	 * @return The encoded string.
+//	 */
+//	static protected String encode( String in )
+//	{
+//		Pattern ampPat = Pattern.compile( "&" );
+//		Pattern ltPat = Pattern.compile( "<" );
+//		Pattern gtPat = Pattern.compile( ">" );
+//		Pattern aposPat = Pattern.compile( "\'" );
+//		Pattern quotPat = Pattern.compile( "\"" );
+//
+//		String out = new String( in );
+//
+//		out = (ampPat.matcher(out)).replaceAll("&amp;");
+//		out = (ltPat.matcher(out)).replaceAll("&lt;");
+//		out = (gtPat.matcher(out)).replaceAll("&gt;");
+//		out = (aposPat.matcher(out)).replaceAll("&apos;");
+//		out = (quotPat.matcher(out)).replaceAll("&quot;");
+//
+//		return out;
+//	}
+
+	/**
+	 * Returns the string where all non-ascii and <, &, > are encoded as numeric entities. I.e. "&lt;A &amp; B &gt;"
+	 * .... (insert result here). The result is safe to include anywhere in a text field in an XML-string. If there was
+	 * no characters to protect, the original string is returned.
 	 * 
-	 * @param in The input string
-	 * @return The encoded string.
+	 * @param originalUnprotectedString
+	 *            original string which may contain characters either reserved in XML or with different representation
+	 *            in different encodings (like 8859-1 and UFT-8)
+	 * @see https://stackoverflow.com/questions/439298/best-way-to-encode-text-data-for-xml-in-java
+	 * @return
 	 */
-	static protected String encode( String in )
-	{
-		Pattern ampPat = Pattern.compile( "&" );
-		Pattern ltPat = Pattern.compile( "<" );
-		Pattern gtPat = Pattern.compile( ">" );
-		Pattern aposPat = Pattern.compile( "\'" );
-		Pattern quotPat = Pattern.compile( "\"" );
+	 static String encode(String originalUnprotectedString) {
+	    if (originalUnprotectedString == null) {
+	        return null;
+	    }
+	    boolean anyCharactersProtected = false;
 
-		String out = new String( in );
+	    StringBuilder stringBuffer = new StringBuilder(originalUnprotectedString.length());
+	    for (int i = 0; i < originalUnprotectedString.length(); i++) {
+	        char ch = originalUnprotectedString.charAt(i);
 
-		out = (ampPat.matcher(out)).replaceAll("&amp;");
-		out = (ltPat.matcher(out)).replaceAll("&lt;");
-		out = (gtPat.matcher(out)).replaceAll("&gt;");
-		out = (aposPat.matcher(out)).replaceAll("&apos;");
-		out = (quotPat.matcher(out)).replaceAll("&quot;");
+	        if (ch<32 || ch>126) {
+	          // control characters or unicode but not Ascii
+            stringBuffer.append("&#" + (int) ch + ";");
+            anyCharactersProtected = true;
+	        } else
+	           switch (ch)
+            {
+            case '<':
+              stringBuffer.append("&lt;");
+              anyCharactersProtected = true;
+              break;
+            case '>':
+              stringBuffer.append("&gt;");
+              anyCharactersProtected = true;
+              break;
+            case '&':
+              stringBuffer.append("&amp;");
+              anyCharactersProtected = true;
+              break;
+            case '\'':
+              stringBuffer.append("&apos;");
+              anyCharactersProtected = true;
+              break;
+            case '"':
+              stringBuffer.append("&quot;");
+              anyCharactersProtected = true;
+              break;
+            default:
+              stringBuffer.append(ch);
+              anyCharactersProtected = true;
+            }
+	    }
+	    if (anyCharactersProtected == false) {
+	        return originalUnprotectedString;
+	    }
 
-		return out;
+	    return stringBuffer.toString();
 	}
 }
