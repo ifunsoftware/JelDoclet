@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
  *                     - Added support for a namespace (http://xml.jeldoclet.com)
  * 
  * Author: Jack D. Herrington <jack_d_herrington@codegeneration.net>
- * 		   Toby Patke 		  <toby_patke _?_ hotmail.com>
  */
 public class XMLNode
 {

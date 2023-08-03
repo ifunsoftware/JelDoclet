@@ -30,7 +30,6 @@ import java.util.Date;
  *      - added admin stuff in xsd
  * 
  * Author: Jack D. Herrington <jack_d_herrington@codegeneration.net>
- * 		   Toby Patke 		  <toby_patke _?_ hotmail.com>
  * 
  * This source is covered by the Open Software Licenses (1.1)
  */
